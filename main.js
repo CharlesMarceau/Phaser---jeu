@@ -118,10 +118,10 @@ var mainState = {
 
 		// si la flèche de haut est pesée et que le joueur touche le sol
 
-		if (this.player.body.touching.down) {
+		if (this.cursor.up.isDown && this.player.body.touching.down) {
 
 			// on fait sauter le joueur
-			this.player.body.velocity.y = -300;
+			this.player.body.velocity.y = -320;
 		}
 
 	},
