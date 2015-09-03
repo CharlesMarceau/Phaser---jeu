@@ -13,6 +13,7 @@ var mainState = {
 		game.load.image('wallV', 'assets/wallVertical.png');
 		game.load.image('wallH', 'assets/wallHorizontal.png');
 		game.load.image('coin', 'assets/coin.png');
+		game.load.image ('enemy', 'assets/enemy.png');
 
 
 	},
@@ -70,6 +71,17 @@ var mainState = {
 		this.score = 0;
 
 
+		// création d'un groupe d'enemies
+		this.enemies = game.add.group();
+		this.enemies.enableBody = true;
+
+		// creation de 10 enemies avec une image "enemi"
+		// les enemis sont morts par défaut, alors ils ne sont pas visibles dans le jeu
+		this.enemies.createMultiple(10, 'enemy');
+
+		// call 'addEnemy' toutes les 2.2 secondes
+		game.time.events.loop(2200, this.addEnemy, this);
+
 	},
 
 	update: function() {
@@ -90,6 +102,13 @@ var mainState = {
 
 		// appel de la fonction takeCoin lorsque le joueur touche au "coin"
 		game.physics.arcade.overlap( this.player, this.coin, this.takeCoin, null, this );
+
+
+		// créer des collisions sur les murs pour les enemis
+		game.physics.arcade.collide(this.enemies, this.walls);
+
+		// callé la fonciton 'playerDie' quand le joueur et l'ennemi se touchent
+		game.physics.arcade.overlap(this.player, this.enemies, this.playerDie, null, this);
 	},
 
 	movePlayer: function() {
@@ -199,7 +218,55 @@ var mainState = {
 
 		// on met le score à jour
 		this.scoreLabel.text = 'score: ' + this.score;
-	}
+
+		// on change la position du "coin"
+		this.updateCoinPosition();
+	},
+
+	updateCoinPosition: function() {
+
+		// création de toutes les positions possibles de réapparition du "coin"
+		var coinPosition = [
+			{x: 140, y:60}, {x:360, y: 60}, // rangé du haut
+			{x: 60, y:140}, {x:440, y: 140}, // rangé du milieu
+			{x: 130, y:300}, {x:370, y: 300}, // rangé du bas
+		];
+
+		// il faut déplacer le "coin"
+		// sinon le coin peut apparaitre 2 fois à la même place
+		for (var i=0; i < coinPosition.length; i++) {
+			if (coinPosition[i].x === this.coin.x) {
+				coinPosition.splice(i, 1);
+			}
+		}
+
+		// on choisi une position au hasard (random)
+		var newPosition = coinPosition [
+		game.rnd.integerInRange(0, coinPosition.length-1)];
+
+		// set la nouvelle position du coin
+		this.coin.reset(newPosition.x, newPosition.y);
+	},
+
+	addEnemy: function() {
+
+		// pogner le premier enemi mort du groupe
+		var enemy = this.enemies.getFirstDead();
+
+		// si aucun enemi est mort -> ne rien faire
+		if(!enemy) {
+			return;
+		}
+
+		// initialiser un enemi
+		enemy.anchor.setTo(0.5, 1);
+		enemy.reset(game.world.centerX, 0);
+		enemy.body.gravity.y = 500;
+		enemy.body.velocity.x = 100 * Phaser.Math.randomSign();
+		enemy.body.bounce.x = 1;
+		enemy.checkWorldBounds = true;
+		enemy.outOfBoundsKill = true;
+	},
 
 };
 
